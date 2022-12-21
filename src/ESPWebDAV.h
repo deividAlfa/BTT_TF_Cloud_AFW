@@ -24,7 +24,7 @@ enum DepthType { DEPTH_NONE, DEPTH_CHILD, DEPTH_ALL };
 class ESPWebDAV	{
 public:
 	bool init(int serverPort);
-	bool initSD(int chipSelectPin, SPISettings spiSettings);
+	bool initSD(sdfat::SdSpiConfig config);
 	bool isClientWaiting();
 	void handleClient(String blank = "");
 	void rejectClient(String rejectMessage);
