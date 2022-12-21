@@ -111,7 +111,7 @@ void setup()
 	Serial.println("--------------------------------");
 	Serial.println("Start FTP server");
 	Serial.println("--------------------------------");
-	ftpSrv.begin("anonymous", "", SD_CS, SPI_FULL_SPEED); //username, password for ftp.  set ports in ESP8266FtpServer.h  (default 21, 50009 for PASV)
+	ftpSrv.begin("anonymous", "", SD_CS, 40000000L); //username, password for ftp.  set ports in ESP8266FtpServer.h  (default 21, 50009 for PASV)
 	Serial.println("FTP server started");
 
 	// Setup FLASH button and LED
@@ -133,7 +133,7 @@ void loop()
 
 		// call handle if server was initialized properly
 
-		dav.initSD(SD_CS, SPI_FULL_SPEED);
+		dav.initSD(SD_CS, 40000000L);
 		dav.handleClient();
 	}
 
