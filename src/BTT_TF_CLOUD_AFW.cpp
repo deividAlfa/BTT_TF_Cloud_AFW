@@ -26,6 +26,7 @@
 
 #define HOSTNAME "BTT_TF_CLOUD_AFW"
 
+
 // SD card
 #define SD_CS 5
 
@@ -33,6 +34,7 @@
 #define WEB_SERVER_PORT 80
 
 // WebDAV server
+sdfat::SdSpiConfig sdconfig(SD_CS, DEDICATED_SPI, SD_SCK_MHZ(40));
 #define WEBDAV_SERVER_PORT 8080
 ESPWebDAV dav;
 String statusMessage;
@@ -111,7 +113,7 @@ void setup()
 	Serial.println("--------------------------------");
 	Serial.println("Start FTP server");
 	Serial.println("--------------------------------");
-	ftpSrv.begin("anonymous", "", SD_CS, SPI_FULL_SPEED); //username, password for ftp.  set ports in ESP8266FtpServer.h  (default 21, 50009 for PASV)
+	ftpSrv.begin("anonymous", "", &sdconfig); //username, password for ftp.  set ports in ESP8266FtpServer.h  (default 21, 50009 for PASV)
 	Serial.println("FTP server started");
 
 	// Setup FLASH button and LED
@@ -133,7 +135,7 @@ void loop()
 
 		// call handle if server was initialized properly
 
-		dav.initSD(SD_CS, SPI_FULL_SPEED);
+		dav.initSD(sdconfig);
 		dav.handleClient();
 	}
 
