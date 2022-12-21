@@ -52,7 +52,7 @@
 class FtpServer
 {
 public:
-  void    begin(String uname, String pword, int chipSelectPin, SPISettings spiSettings);
+  void    begin(String uname, String pword, sdfat::SdSpiConfig * config);
   void    handleFTP();
   
   int8_t   cmdStatus,SD_Status;                 // status of ftp command connexion
@@ -83,8 +83,7 @@ private:
   
   sdfat::FatFile file;
   sdfat::SdFat SD;
-  int chipSelectPin;
-  SPISettings spiSettings;
+  sdfat::SdSpiConfig * sdconfig;
   
   boolean  dataPassiveConn;
   uint16_t dataPort;
@@ -109,4 +108,3 @@ private:
 };
 
 #endif // FTP_SERVERESP_H
-
