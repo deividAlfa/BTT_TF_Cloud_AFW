@@ -26,15 +26,14 @@
 
 #define HOSTNAME "BTT_TF_CLOUD_AFW"
 
-
 // SD card
 #define SD_CS 5
+sdfat::SdSpiConfig sdconfig(SD_CS, DEDICATED_SPI, SD_SCK_MHZ(40));
 
 // Webserver Infopage, Firmwareupdate
 #define WEB_SERVER_PORT 80
 
 // WebDAV server
-sdfat::SdSpiConfig sdconfig(SD_CS, DEDICATED_SPI, SD_SCK_MHZ(40));
 #define WEBDAV_SERVER_PORT 8080
 ESPWebDAV dav;
 String statusMessage;
