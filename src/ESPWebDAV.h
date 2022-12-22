@@ -2,14 +2,15 @@
 #define ESPWEBDAV_H
 
 #include <ESP8266WiFi.h>
-#include <SdFat.h>
+#include "SdFat.h"
 
-// debugging
-// #define DBG_PRINT(...) 		{ Serial.print(__VA_ARGS__); }
-// #define DBG_PRINTLN(...) 	{ Serial.println(__VA_ARGS__); }
-// production
+#if defined DEBUG || (1==1)
+#define DBG_PRINT(...) 		{ Serial.print(__VA_ARGS__); }
+#define DBG_PRINTLN(...) 	{ Serial.println(__VA_ARGS__); }
+#else
 #define DBG_PRINT(...) 		{ }
 #define DBG_PRINTLN(...) 	{ }
+#endif
 
 // constants for WebServer
 #define CONTENT_LENGTH_UNKNOWN ((size_t) -1)
@@ -19,12 +20,10 @@
 enum ResourceType { RESOURCE_NONE, RESOURCE_FILE, RESOURCE_DIR };
 enum DepthType { DEPTH_NONE, DEPTH_CHILD, DEPTH_ALL };
 
-//using namespace sdfat;
-
 class ESPWebDAV	{
 public:
 	bool init(int serverPort);
-	bool initSD(int chipSelectPin, SPISettings spiSettings);
+	bool initSD(SdSpiConfig config);
 	bool isClientWaiting();
 	void handleClient(String blank = "");
 	void rejectClient(String rejectMessage);
@@ -41,10 +40,10 @@ protected:
 	void handleUnlock(ResourceType resource);
 	void handlePropPatch(ResourceType resource);
 	void handleProp(ResourceType resource);
-	void sendPropResponse(boolean recursing, sdfat::FatFile *curFile);
+	void sendPropResponse(boolean recursing, FatFile *curFile);
 	void handleGet(ResourceType resource, bool isGet);
 	void handlePut(ResourceType resource);
-	void handleWriteError(String message, sdfat::FatFile *wFile);
+	void handleWriteError(String message, FatFile *wFile);
 	void handleDirectoryCreate(ResourceType resource);
 	void handleMove(ResourceType resource);
 	void handleDelete(ResourceType resource);
@@ -66,7 +65,7 @@ protected:
 	
 	// variables pertaining to current most HTTP request being serviced
 	WiFiServer *server;
-	sdfat::SdFat sd;
+	SdFs sd;
 
 	WiFiClient 	client;
 	String 		method;
