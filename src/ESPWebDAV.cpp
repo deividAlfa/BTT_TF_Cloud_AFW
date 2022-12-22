@@ -350,7 +350,8 @@ void ESPWebDAV::handleGet(ResourceType resource, bool isGet)	{
 	if(resource != RESOURCE_FILE)
 		return handleNotFound();
 
-	SdFile rFile;
+	SdFile rFile;	
+	long tStart = millis();
 	uint8_t buf[1460];
 	rFile.open(uri.c_str(), O_READ);
 
@@ -409,6 +410,7 @@ void ESPWebDAV::handlePut(ResourceType resource)	{
 		// buffer size is critical *don't change*
 		const size_t WRITE_BLOCK_CONST = 512;
 		uint8_t buf[WRITE_BLOCK_CONST];
+		long tStart = millis();
 		size_t numRemaining = contentLen;
 
 		// high speed raw write implementation
