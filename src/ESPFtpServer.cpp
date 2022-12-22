@@ -26,12 +26,10 @@
 #include <ESP8266WiFi.h>
 #include <WiFiClient.h>
 
-using namespace sdfat;
-
 WiFiServer ftpServer(FTP_CTRL_PORT);
 WiFiServer dataServer(FTP_DATA_PORT_PASV);
 
-void FtpServer::begin(String uname, String pword, int chipSelectPin, SPISettings spiSettings)
+void FtpServer::begin(String uname, String pword, SdSpiConfig * config)
 {
   // Tells the ftp server to begin listening for incoming connection
   _FTP_USER = uname;
@@ -46,9 +44,7 @@ void FtpServer::begin(String uname, String pword, int chipSelectPin, SPISettings
   cmdStatus = 0;
   SD_Status = 0;
   iniVariables();
-
-  this->chipSelectPin = chipSelectPin;
-  this->spiSettings = spiSettings;
+  sdconfig = config;
 }
 
 void FtpServer::iniVariables()
@@ -110,9 +106,13 @@ void FtpServer::handleFTP()
   {
     if (cmdStatus == 3) // Ftp server waiting for user identity
       if (userIdentity())
+      {
         cmdStatus = 4;
+      }
       else
+      {
         cmdStatus = 0;
+      }
     else if (cmdStatus == 4) // Ftp server waiting for user registration
       if (userPassword())
       {
@@ -122,14 +122,20 @@ void FtpServer::handleFTP()
         initSD();
       }
       else
+      {
         cmdStatus = 0;
+      }
     else if (cmdStatus == 5) // Ftp server waiting for user command
+    {
       if (!processCommand())
       {
         cmdStatus = 0;
       }
       else
+      {
         millisEndConnection = millis() + millisTimeOut;
+      }
+    }
   }
   else if (!client.connected() || !client)
   {
@@ -507,15 +513,15 @@ boolean FtpServer::processCommand()
     {
       client.println("150 Accepted data connection");
       uint16_t nm = 0;
-      SdFile dir;
-      dir.open(SD.vwd(), cwdName, O_READ);
+      FatFile dir;
+      dir.open(cwdName, O_READ);
       dir.rewind();
 
       data.println("Type=cdir;Perm=cmpel; " + String(cwdName));
       data.println("Type=pdir;Perm=el; ");
       nm = 2;
 
-      SdFile entry;
+      FatFile entry;
       while (entry.openNext(&dir, O_READ))
       {
         entry.getName(buf, sizeof(buf));
@@ -533,16 +539,19 @@ boolean FtpServer::processCommand()
         String fs = String(entry.fileSize());
 
         // File date
-        dir_t dir;
-        entry.dirEntry(&dir);
-
+        DirFat_t dir;
         tm tmStr;
-        tmStr.tm_hour = FAT_HOUR(dir.lastWriteTime);
-        tmStr.tm_min = FAT_MINUTE(dir.lastWriteTime);
-        tmStr.tm_sec = FAT_SECOND(dir.lastWriteTime);
-        tmStr.tm_year = FAT_YEAR(dir.lastWriteDate) - 1900;
-        tmStr.tm_mon = FAT_MONTH(dir.lastWriteDate) - 1;
-        tmStr.tm_mday = FAT_DAY(dir.lastWriteDate);
+        uint16_t pdate;
+        uint16_t ptime;
+
+        entry.dirEntry(&dir);
+        entry.getModifyDateTime(&pdate, &ptime);
+        tmStr.tm_hour = FS_HOUR(ptime);
+        tmStr.tm_min = FS_MINUTE(ptime);
+        tmStr.tm_sec = FS_SECOND(ptime);
+        tmStr.tm_year = FS_YEAR(pdate) - 1900;
+        tmStr.tm_mon = FS_MONTH(pdate) - 1;
+        tmStr.tm_mday = FS_DAY(pdate);
         time_t t2t = mktime(&tmStr);
         tm *gTm = gmtime(&t2t);
         sprintf(buf, "%04d%02d%02d%02d%02d%02d", gTm->tm_year + 1900, gTm->tm_mon, gTm->tm_mday, gTm->tm_hour, gTm->tm_min, gTm->tm_sec);
@@ -578,14 +587,14 @@ boolean FtpServer::processCommand()
       client.println("150 Accepted data connection");
       uint16_t nm = 0;
       //try.. Dir dir=SPIFFS.openDir(cwdName);
-      FatFile dir = SD.open(cwdName);
+      FsFile dir = SD.open(cwdName);
       //File dir=SD.open(cwdName);
       //try.. if( !SPIFFS.exists( cwdName ))
       if (!SD.exists(cwdName))
         client.println("550 Can't open directory " + String(parameters));
       else
       {
-        FatFile entry;
+        FsFile entry;
         while (entry.openNext(&dir, O_READ))
         {
           char buf[255];
@@ -770,7 +779,6 @@ boolean FtpServer::processCommand()
   else if (!strcmp(command, "RNTO"))
   {
     char path[FTP_CWD_SIZE];
-    char dir[FTP_FIL_SIZE];
     if (strlen(buf) == 0 || !rnfrCmd)
       client.println("503 Need RNFR before RNTO");
     else if (strlen(parameters) == 0)
@@ -961,8 +969,11 @@ int8_t FtpServer::readChar()
     Serial.print(c);
 #endif
     if (c == '\\')
+    {
       c = '/';
-    if (c != '\r')
+    }
+    else if (c != '\r')
+    {
       if (c != '\n')
       {
         if (iCL < FTP_CMD_SIZE)
@@ -1003,13 +1014,14 @@ int8_t FtpServer::readChar()
           iCL = 0;
         }
       }
-    if (rc > 0)
-      for (uint8_t i = 0; i < strlen(command); i++)
-        command[i] = toupper(command[i]);
-    if (rc == -2)
-    {
-      iCL = 0;
-      client.println("500 Syntax error");
+      if (rc > 0)
+        for (uint8_t i = 0; i < strlen(command); i++)
+          command[i] = toupper(command[i]);
+      if (rc == -2)
+      {
+        iCL = 0;
+        client.println("500 Syntax error");
+      }
     }
   }
   return rc;
@@ -1132,7 +1144,7 @@ bool FtpServer::initSD()
   if (!isSDInit)
   {
     isSDInit = true;
-    bool ret = SD.begin(chipSelectPin, spiSettings);
+    bool ret = SD.begin(*sdconfig);
 
     if (!ret)
       Serial.println("FTP: Error opening SD card");
