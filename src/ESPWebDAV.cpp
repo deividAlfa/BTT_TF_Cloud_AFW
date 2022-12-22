@@ -261,7 +261,7 @@ void ESPWebDAV::handleProp(ResourceType resource)	{
 		// append children information to message
 		SdFile childFile;
 		while(childFile.openNext(&baseFile, O_READ)) {
-			yield();
+			delay(0);
 			sendPropResponse(true, &childFile);
 			childFile.close();
 		}
