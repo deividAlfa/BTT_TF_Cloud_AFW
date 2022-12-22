@@ -30,7 +30,7 @@
 #ifndef FTP_SERVERESP_H
 #define FTP_SERVERESP_H
 
-#include <SdFat.h>
+#include "SdFat.h"
 #include <WiFiClient.h>
 #include "Version.h"
 
@@ -52,7 +52,7 @@
 class FtpServer
 {
 public:
-  void    begin(String uname, String pword, int chipSelectPin, SPISettings spiSettings);
+  void    begin(String uname, String pword, SdSpiConfig * config);
   void    handleFTP();
   
   int8_t   cmdStatus,SD_Status;                 // status of ftp command connexion
@@ -81,10 +81,9 @@ private:
   WiFiClient client;
   WiFiClient data;
   
-  sdfat::FatFile file;
-  sdfat::SdFat SD;
-  int chipSelectPin;
-  SPISettings spiSettings;
+  FatFile file;
+  SdFs SD;
+  SdSpiConfig * sdconfig;
   
   boolean  dataPassiveConn;
   uint16_t dataPort;
@@ -109,4 +108,3 @@ private:
 };
 
 #endif // FTP_SERVERESP_H
-
