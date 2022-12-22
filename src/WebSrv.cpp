@@ -112,7 +112,7 @@ void ESPWebDAV::processClient(THandlerFunction handler, String message) {
 
 	// Wait until the client sends some data
 	while(!client.available())
-		delay(1);
+		delay(0);
 	
 	// reset all variables
 	_chunked = false;
@@ -313,10 +313,10 @@ void ESPWebDAV::setContentLength(size_t len)	{
 // ------------------------
 size_t ESPWebDAV::readBytesWithTimeout(uint8_t *buf, size_t bufSize) {
 // ------------------------
-	int timeout_ms = HTTP_MAX_POST_WAIT;
+	unsigned long tout = millis();
 	size_t numAvailable = 0;
-	while(!(numAvailable = client.available()) && client.connected() && timeout_ms--) 
-		delay(1);
+	while(!(numAvailable = client.available()) && client.connected() && (millis()-tout)<HTTP_MAX_POST_WAIT)
+		delay(0);
 
 	if(!numAvailable)
 		return 0;
@@ -328,11 +328,10 @@ size_t ESPWebDAV::readBytesWithTimeout(uint8_t *buf, size_t bufSize) {
 // ------------------------
 size_t ESPWebDAV::readBytesWithTimeout(uint8_t *buf, size_t bufSize, size_t numToRead) {
 // ------------------------
-	int timeout_ms = HTTP_MAX_POST_WAIT;
-	size_t numAvailable = 0;
-	
-	while(((numAvailable = client.available()) < numToRead) && client.connected() && timeout_ms--) 
-		delay(1);
+	unsigned long tout = millis();
+	size_t numAvailable = 0;	
+	while(((numAvailable = client.available()) < numToRead) && client.connected() && (millis()-tout)<HTTP_MAX_POST_WAIT)
+		delay(0);
 
 	if(!numAvailable)
 		return 0;
