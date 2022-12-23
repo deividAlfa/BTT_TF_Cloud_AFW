@@ -1,10 +1,13 @@
 #ifndef ESPWEBDAV_H
 #define ESPWEBDAV_H
 
+// Enable to show debugging messages
+//#define ESPWEBDAV_DEBUG
+
 #include <ESP8266WiFi.h>
 #include "SdFat.h"
 
-#if defined DEBUG || (1==1)
+#if defined ESPWEBDAV_DEBUG
 #define DBG_PRINT(...) 		{ Serial.print(__VA_ARGS__); }
 #define DBG_PRINTLN(...) 	{ Serial.println(__VA_ARGS__); }
 #else
